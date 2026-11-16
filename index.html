@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080b19">
+  <title>神経衰弱 — NEON TABLE</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <section class="menu-screen" id="menuScreen">
+      <p class="eyebrow">NEON TABLE · MULTIPLAYER</p>
+      <h1>神経衰弱</h1>
+      <p class="intro">2〜6人で遊ぶ、ネオンナイトのカードゲーム</p>
+      <section class="player-picker" aria-label="プレイ人数">
+        <p>プレイ人数</p>
+        <div id="playerOptions" class="player-options">
+          <button type="button" data-players="2" class="selected" aria-pressed="true">2人</button>
+          <button type="button" data-players="3" aria-pressed="false">3人</button>
+          <button type="button" data-players="4" aria-pressed="false">4人</button>
+          <button type="button" data-players="5" aria-pressed="false">5人</button>
+          <button type="button" data-players="6" aria-pressed="false">6人</button>
+        </div>
+      </section>
+      <div class="menu-cards" aria-label="ゲームを選択">
+        <button class="mode-card" type="button" data-deck="52" data-mode="normal">
+          <span class="mode-icon" aria-hidden="true">♠ ♥ ♣ ♦</span>
+          <span class="mode-title">トランプ 52枚</span><span class="mode-detail">通常 · 26ペア</span>
+          <span class="mode-cta">ゲームスタート <span aria-hidden="true">→</span></span>
+        </button>
+        <button class="mode-card" type="button" data-deck="26" data-mode="normal">
+          <span class="mode-icon half" aria-hidden="true">♥ ♦</span>
+          <span class="mode-title">ハーフ 26枚</span><span class="mode-detail">通常 · 13ペア</span>
+          <span class="mode-cta">ゲームスタート <span aria-hidden="true">→</span></span>
+        </button>
+        <button class="mode-card psychic-choice" type="button" data-deck="52" data-mode="psychic">
+          <span class="mode-icon" aria-hidden="true">✦ ♠ ✦</span>
+          <span class="mode-title">トランプ 52枚</span><span class="mode-detail">超能力 · 26ペア</span>
+          <span class="mode-cta">ゲームスタート <span aria-hidden="true">→</span></span>
+        </button>
+        <button class="mode-card psychic-choice" type="button" data-deck="26" data-mode="psychic">
+          <span class="mode-icon half" aria-hidden="true">✦ ♥ ♦</span>
+          <span class="mode-title">ハーフ 26枚</span><span class="mode-detail">超能力 · 13ペア</span>
+          <span class="mode-cta">ゲームスタート <span aria-hidden="true">→</span></span>
+        </button>
+        <button class="mode-card wanted-choice" type="button" data-deck="52" data-mode="wanted">
+          <span class="mode-icon" aria-hidden="true">★ ♠ ★</span>
+          <span class="mode-title">トランプ 52枚</span><span class="mode-detail">WANTED · 5数字がボーナス</span>
+          <span class="mode-cta">ゲームスタート <span aria-hidden="true">→</span></span>
+        </button>
+        <button class="mode-card wanted-choice" type="button" data-deck="26" data-mode="wanted">
+          <span class="mode-icon half" aria-hidden="true">★ ♥ ♦</span>
+          <span class="mode-title">ハーフ 26枚</span><span class="mode-detail">WANTED · 3数字がボーナス</span>
+          <span class="mode-cta">ゲームスタート <span aria-hidden="true">→</span></span>
+        </button>
+        <button class="mode-card drink-choice" type="button" data-deck="52" data-mode="drink">
+          <span class="mode-icon" aria-hidden="true">🍸 ♠ 🍹</span>
+          <span class="mode-title">トランプ 52枚</span><span class="mode-detail">飲み会 · 26ペア</span>
+          <span class="mode-cta">ゲームスタート <span aria-hidden="true">→</span></span>
+        </button>
+        <button class="mode-card drink-choice" type="button" data-deck="26" data-mode="drink">
+          <span class="mode-icon half" aria-hidden="true">🍹 ♥ ♦</span>
+          <span class="mode-title">ハーフ 26枚</span><span class="mode-detail">飲み会 · 13ペア</span>
+          <span class="mode-cta">ゲームスタート <span aria-hidden="true">→</span></span>
+        </button>
+      </div>
+      <button class="resume-button" id="resumeButton" type="button" hidden>▶ 対局を再開する</button>
+      <p class="rule-note">同じ数字をそろえたら、もう一度あなたの番。</p>
+    </section>
+
+    <section class="game-screen" id="gameScreen" hidden>
+      <header class="game-header">
+        <button class="text-button" id="menuButton" type="button">← メニュー</button>
+        <div class="title-wrap"><p class="eyebrow">NEON TABLE · MULTIPLAYER</p><h1>神経衰弱</h1></div>
+        <button class="text-button" id="restart" type="button">↻ やり直す</button>
+      </header>
+      <section class="scoreboard" id="scoreboard" aria-label="対戦状況">
+        <div class="player-list" id="players"></div>
+        <div class="match-info"><span id="deckLabel">52枚</span><span class="turn-count"><span id="turns">0</span> ターン</span></div>
+      </section>
+      <section class="wanted-banner" id="wantedBanner" aria-label="ボーナス数字" hidden>
+        <span class="wanted-label">WANTED NUMBERS</span>
+        <strong id="wantedNumber">A</strong>
+        <span class="wanted-reward">対象ペアは各 <b>3 POINTS</b></span>
+      </section>
+      <section class="drink-event" id="drinkEvent" aria-live="polite" hidden>
+        <span class="drink-event-title">ROUND EVENT</span>
+        <p id="drinkEventText">同じ数字のペアでイベント発生</p>
+        <small>5ポイント = 1ショット · 到達分は回復不可 · ノンアルでもOK</small>
+      </section>
+      <p class="message" id="message" aria-live="polite">PLAYER 1 の番です。カードを2枚めくろう。</p>
+      <section class="powers" id="powers" aria-label="超能力" hidden>
+        <p class="powers-title">超能力 <span>各プレイヤー1回ずつ</span></p>
+        <div class="power-buttons">
+          <button class="power-button" type="button" data-power="peek"><span class="power-icon">◉</span><span>全体透視</span><small>このターン</small></button>
+          <button class="power-button" type="button" data-power="shuffle"><span class="power-icon">⤨</span><span>配置シャッフル</span><small>場を混ぜる</small></button>
+          <button class="power-button" type="button" data-power="four"><span class="power-icon">✦</span><span>4枚めくり</span><small>2ペアまで</small></button>
+        </div>
+      </section>
+      <section class="board" id="board" aria-label="カードの場"></section>
+    </section>
+  </main>
+  <script src="script.js" defer></script>
+</body>
+</html>
