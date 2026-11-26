@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#080b19">
-  <title>神経衰弱 — NEON TABLE v1.0.0.1</title>
+  <title>神経衰弱 — NEON TABLE v1.0.0.2</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -30,7 +30,7 @@
           <span class="mode-cta">ゲームスタート <span aria-hidden="true">→</span></span>
         </button>
         <button class="mode-card" type="button" data-deck="26" data-mode="normal">
-          <span class="mode-icon half" aria-hidden="true">♥ ♦</span>
+          <span class="mode-icon half" aria-hidden="true">♠ ♥</span>
           <span class="mode-title">ハーフ 26枚</span><span class="mode-detail">通常 · 13ペア</span>
           <span class="mode-cta">ゲームスタート <span aria-hidden="true">→</span></span>
         </button>
@@ -40,7 +40,7 @@
           <span class="mode-cta">ゲームスタート <span aria-hidden="true">→</span></span>
         </button>
         <button class="mode-card psychic-choice" type="button" data-deck="26" data-mode="psychic">
-          <span class="mode-icon half" aria-hidden="true">✦ ♥ ♦</span>
+          <span class="mode-icon half" aria-hidden="true">✦ ♠ ♥</span>
           <span class="mode-title">ハーフ 26枚</span><span class="mode-detail">超能力 · 13ペア</span>
           <span class="mode-cta">ゲームスタート <span aria-hidden="true">→</span></span>
         </button>
@@ -50,7 +50,7 @@
           <span class="mode-cta">ゲームスタート <span aria-hidden="true">→</span></span>
         </button>
         <button class="mode-card wanted-choice" type="button" data-deck="26" data-mode="wanted">
-          <span class="mode-icon half" aria-hidden="true">★ ♥ ♦</span>
+          <span class="mode-icon half" aria-hidden="true">★ ♠ ♥</span>
           <span class="mode-title">ハーフ 26枚</span><span class="mode-detail">WANTED · 3数字がボーナス</span>
           <span class="mode-cta">ゲームスタート <span aria-hidden="true">→</span></span>
         </button>
@@ -60,7 +60,7 @@
           <span class="mode-cta">ゲームスタート <span aria-hidden="true">→</span></span>
         </button>
         <button class="mode-card drink-choice" type="button" data-deck="26" data-mode="drink">
-          <span class="mode-icon half" aria-hidden="true">🍹 ♥ ♦</span>
+          <span class="mode-icon half" aria-hidden="true">🍹 ♠ ♥</span>
           <span class="mode-title">ハーフ 26枚</span><span class="mode-detail">飲み会 · 13ペア</span>
           <span class="mode-cta">ゲームスタート <span aria-hidden="true">→</span></span>
         </button>
@@ -90,8 +90,11 @@
         <small>5ポイント = 1ショット · 到達分は回復不可 · ノンアルでもOK</small>
       </section>
       <p class="message" id="message" aria-live="polite">PLAYER 1 の番です。カードを2枚めくろう。</p>
+      <div class="memory-countdown" id="memoryCountdownPanel" aria-live="off" hidden>
+        <span>記憶タイム</span><strong id="memoryCountdown">5</strong><small>秒</small>
+      </div>
       <section class="powers" id="powers" aria-label="超能力" hidden>
-        <p class="powers-title">超能力 <span>各プレイヤー1回ずつ</span></p>
+        <p class="powers-title">超能力 <span>各プレイヤーが1つを1回だけ</span></p>
         <div class="power-buttons">
           <button class="power-button" type="button" data-power="peek"><span class="power-icon">◉</span><span>全体透視</span><small>このターン</small></button>
           <button class="power-button" type="button" data-power="shuffle"><span class="power-icon">⤨</span><span>配置シャッフル</span><small>場を混ぜる</small></button>
