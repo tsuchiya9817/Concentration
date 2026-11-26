@@ -110,6 +110,10 @@ h1 { margin: 0; font-family: Georgia, "Yu Mincho", serif; font-size: clamp(45px,
 .drink-event-title { color: #76f2c5; font-size: 9px; font-weight: 900; letter-spacing: .22em; text-shadow: 0 0 9px #76f2c577; }
 .drink-event p { margin: 6px 0; color: #f0fff9; font-size: clamp(15px, 3vw, 19px); font-weight: 800; line-height: 1.5; }
 .drink-event small { color: #a2c8bd; font-size: 10px; }
+.memory-countdown { display: flex; width: fit-content; align-items: center; justify-content: center; gap: 9px; margin: 0 auto 12px; padding: 6px 17px; border: 1px solid #42f5e9aa; border-radius: 999px; color: #c9fffb; background: #11242edc; box-shadow: 0 0 22px #42f5e944, inset 0 0 12px #42f5e911; }
+.memory-countdown span { font-size: 11px; font-weight: 700; letter-spacing: .12em; }
+.memory-countdown strong { min-width: 1ch; color: var(--cyan); font-family: Georgia, serif; font-size: 25px; line-height: 1; text-align: center; text-shadow: 0 0 14px #42f5e9bb; }
+.memory-countdown small { color: #a4c8ce; font-size: 10px; }
 .powers { width: min(100%, 710px); margin: 0 auto 14px; padding: 10px 13px 12px; border: 1px solid #654691; border-radius: 13px; background: linear-gradient(110deg, #1a1631dd, #13162add); box-shadow: 0 0 22px #8a63ff1c; }
 .powers-title { display: flex; justify-content: space-between; margin: 0 2px 9px; color: #d1bcff; font-size: 11px; font-weight: 800; letter-spacing: .08em; }
 .powers-title span { color: var(--muted); font-size: 10px; font-weight: 400; letter-spacing: 0; }
@@ -118,6 +122,7 @@ h1 { margin: 0; font-family: Georgia, "Yu Mincho", serif; font-size: clamp(45px,
 .power-button:hover:not(:disabled) { border-color: var(--pink); box-shadow: 0 0 14px #ff4fd833; transform: translateY(-1px); }
 .power-button:disabled { cursor: default; }
 .power-button.used { opacity: .38; filter: saturate(.4); }
+.power-button.unavailable { opacity: .55; }
 .power-icon { grid-row: 1 / span 2; color: var(--pink); font-size: 20px; text-align: center; }
 .power-button > span:nth-child(2) { font-size: 11px; font-weight: 700; }
 .power-button small { color: #a49bbf; font-size: 9px; }
@@ -136,9 +141,13 @@ h1 { margin: 0; font-family: Georgia, "Yu Mincho", serif; font-size: clamp(45px,
 .front { display: block; border: 1px solid #d9def2; color: #182036; background: #f8f9ff; box-shadow: 0 2px 0 #aab0c7, 0 0 10px #dbe4ff22; transform: rotateY(180deg); }
 .drink-face .pip { display: none; }
 .task-hint { position: absolute; top: 50%; left: 50%; width: 92%; color: #25314b; font-size: clamp(6px, .85vw, 10px); font-weight: 800; line-height: 1.2; text-align: center; text-wrap: balance; transform: translate(-50%, -50%); }
+.board.memorizing .drink-face .corner span:last-child, .board.memorizing .drink-face .task-hint { visibility: hidden; }
 .card.matched .front { border-color: var(--cyan); background: #e9fffc; box-shadow: 0 0 12px #42f5e988, 0 0 24px #42f5e933; }
 .card.selected .front { border-color: var(--active-player-color); box-shadow: inset 0 0 0 2px var(--active-player-color), 0 0 15px var(--active-player-glow); }
 .card.matched .front { border-color: var(--owner-color, var(--cyan)); background: var(--owner-soft, #e2fffb); box-shadow: 0 0 13px var(--owner-glow, #42f5e9bb), 0 0 25px color-mix(in srgb, var(--owner-color, var(--cyan)) 25%, transparent); }
+.card.peek-found .front::after, .card.peek-unfound .front::after { position: absolute; top: 50%; left: 50%; z-index: 1; padding: 4px 7px; border-radius: 999px; font-family: "Yu Gothic", Meiryo, sans-serif; font-size: clamp(7px, .8vw, 10px); font-weight: 900; white-space: nowrap; transform: translate(-50%, -50%); }
+.card.peek-found .front::after { color: #101729; background: var(--owner-color, var(--cyan)); content: "✓ 発見済"; }
+.card.peek-unfound .front::after { border: 1px solid #42f5e9; color: #eaffff; background: #111b2de8; content: "未発見"; box-shadow: 0 0 10px #42f5e988; }
 .card.matched { cursor: default; }
 .corner { position: absolute; display: flex; flex-direction: column; align-items: center; font-family: Georgia, "Times New Roman", serif; font-size: clamp(10px, 1.4vw, 18px); font-weight: 700; line-height: .92; }
 .corner span:last-child { margin-top: 1px; font-size: .8em; }

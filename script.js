@@ -34,9 +34,12 @@
   const resumeButton = document.querySelector('#resumeButton');
   const drinkEventPanel = document.querySelector('#drinkEvent');
   const drinkEventText = document.querySelector('#drinkEventText');
+  const memoryCountdownPanel = document.querySelector('#memoryCountdownPanel');
+  const memoryCountdown = document.querySelector('#memoryCountdown');
   const app = document.querySelector('.app');
   let state = null;
   let timerId = null;
+  let countdownIntervalId = null;
   let selectedPlayerCount = 2;
   const playerColors = [
     { main: '#42f5e9', soft: '#e2fffb', glow: '#42f5e9bb' },
@@ -56,7 +59,7 @@
   }
 
   function makeDeck(size) {
-    const chosenSuits = size === 52 ? suits : [suits[1], suits[3]];
+    const chosenSuits = size === 52 ? suits : [suits[0], suits[1]];
     return ranks.flatMap((rank) => chosenSuits.map((suit) => ({
       rank,
       symbol: suit.symbol,
@@ -81,7 +84,7 @@
       if (!raw) return null;
       const saved = JSON.parse(raw);
       if (![26, 52].includes(saved.deckSize) || !Array.isArray(saved.cards) || saved.cards.length !== saved.deckSize) return null;
-      if (!Array.isArray(saved.scores) || !Array.isArray(saved.usedPowers)) return null;
+      if (!Array.isArray(saved.scores) || (!Array.isArray(saved.usedPowers) && !Object.prototype.hasOwnProperty.call(saved, 'usedAbility') && !Object.prototype.hasOwnProperty.call(saved, 'usedAbilities'))) return null;
       return saved;
     } catch {
       return null;
@@ -121,25 +124,31 @@
   }
 
   function updateBoard() {
+    const memorizing = state.phase === 'memorize';
+    board.classList.toggle('memorizing', memorizing);
     const activeColor = playerColors[state.activePlayer].main;
     const activeGlow = playerColors[state.activePlayer].glow;
     board.style.setProperty('--active-player-color', activeColor);
     board.style.setProperty('--active-player-glow', activeGlow);
     [...board.children].forEach((element, index) => {
       const card = state.cards[index];
-      element.classList.toggle('flipped', card.revealed || card.matched || (state.peekActive && !card.matched));
+      element.classList.toggle('flipped', memorizing || card.revealed || card.matched || (state.peekActive && !card.matched));
       element.classList.toggle('selected', card.revealed && !card.matched);
       element.classList.toggle('matched', card.matched);
+      element.classList.toggle('peek-found', state.peekActive && card.matched);
+      element.classList.toggle('peek-unfound', state.peekActive && !card.matched);
       const owner = card.matchedBy;
       if (Number.isInteger(owner) && playerColors[owner]) {
         element.style.setProperty('--owner-color', playerColors[owner].main);
         element.style.setProperty('--owner-soft', playerColors[owner].soft);
         element.style.setProperty('--owner-glow', playerColors[owner].glow);
       }
-      element.disabled = state.phase === 'resolving' || state.phase === 'gameover';
+      element.disabled = memorizing || state.phase === 'resolving' || state.phase === 'gameover';
       const faceText = `${card.rank}${card.symbol}`;
       const taskText = state.mode === 'drink' ? `、${drinkTasks[card.rank].hint.replace('\n', ' ')}` : '';
-      element.setAttribute('aria-label', card.matched ? `${faceText}、ペア成立${taskText}` : card.revealed ? `${faceText}${taskText}` : `カード ${index + 1}、裏向き`);
+      const memoryText = state.mode === 'drink' ? `カード ${index + 1}、数字 ${card.rank}` : faceText;
+      const peekText = state.peekActive ? (card.matched ? '、発見済み' : '、未発見') : '';
+      element.setAttribute('aria-label', memorizing ? memoryText : card.matched ? `${faceText}、ペア成立${taskText}${peekText}` : card.revealed || state.peekActive ? `${faceText}${taskText}${peekText}` : `カード ${index + 1}、裏向き`);
       element.setAttribute('aria-pressed', card.revealed || card.matched ? 'true' : 'false');
     });
   }
@@ -189,13 +198,18 @@
     drinkEventText.textContent = state.drinkEvent || 'ペアがそろうと、数字ごとの指示が出ます。';
     message.textContent = state.message;
     message.classList.toggle('won', state.phase === 'gameover');
+    memoryCountdownPanel.hidden = state.phase !== 'memorize';
+    if (state.phase === 'memorize') updateCountdown();
     powersPanel.hidden = state.mode !== 'psychic';
     const hasSelection = state.cards.some((card) => card.revealed && !card.matched);
     powerButtons.forEach((button) => {
-      const available = !state.usedPowers[state.activePlayer][button.dataset.power];
+      const playerAbility = state.usedAbilities[state.activePlayer];
+      const used = playerAbility === button.dataset.power;
+      const available = !playerAbility;
       button.disabled = state.phase !== 'playing' || hasSelection || !available;
-      button.classList.toggle('used', !available);
-      button.setAttribute('aria-label', `${button.querySelector('span:nth-child(2)').textContent}${available ? ' 使用可能' : ' 使用済み'}`);
+      button.classList.toggle('used', used);
+      button.classList.toggle('unavailable', !available && !used);
+      button.setAttribute('aria-label', `${button.querySelector('span:nth-child(2)').textContent}${used ? ' 使用済み' : available ? ' 使用可能' : ' このプレイヤーは能力使用済み'}`);
     });
     updateBoard();
     save();
@@ -213,6 +227,7 @@
 
   function endGame() {
     state.phase = 'gameover';
+    state.memorizeUntil = null;
     state.fourCardTurn = false;
     state.peekActive = false;
     const lowerScoreWins = state.mode === 'drink';
@@ -339,10 +354,32 @@
 
   function schedulePhase() {
     window.clearTimeout(timerId);
+    window.clearInterval(countdownIntervalId);
+    countdownIntervalId = null;
     if (!state) return;
     if (state.phase === 'resolving' && state.resolution) {
       timerId = window.setTimeout(completeResolution, Math.max(0, state.resolution.at - Date.now()));
+    } else if (state.phase === 'memorize' && state.memorizeUntil) {
+      updateCountdown();
+      countdownIntervalId = window.setInterval(updateCountdown, 100);
+      timerId = window.setTimeout(completeMemorize, Math.max(0, state.memorizeUntil - Date.now()));
     }
+  }
+
+  function updateCountdown() {
+    if (!state || state.phase !== 'memorize') return;
+    const secondsLeft = Math.max(1, Math.ceil((state.memorizeUntil - Date.now()) / 1000));
+    memoryCountdown.textContent = secondsLeft;
+  }
+
+  function completeMemorize() {
+    if (!state || state.phase !== 'memorize') return;
+    window.clearInterval(countdownIntervalId);
+    countdownIntervalId = null;
+    state.phase = 'playing';
+    state.memorizeUntil = null;
+    setTurnMessage();
+    updateUI();
   }
 
   function flipCard(index) {
@@ -367,12 +404,11 @@
 
   function usePower(power) {
     if (!state || state.mode !== 'psychic' || state.phase !== 'playing') return;
-    const playerPowers = state.usedPowers[state.activePlayer];
-    if (playerPowers[power] || state.cards.some((card) => card.revealed && !card.matched)) return;
-    playerPowers[power] = true;
+    if (state.usedAbilities[state.activePlayer] || state.cards.some((card) => card.revealed && !card.matched)) return;
+    state.usedAbilities[state.activePlayer] = power;
     if (power === 'peek') {
       state.peekActive = true;
-      state.message = '全体透視中！見えている間にカードを選ぼう。';
+      state.message = '全体透視中！「発見済み」と「未発見」を確認しよう。';
       updateUI();
       return;
     }
@@ -410,6 +446,7 @@
 
   function startGame(size, mode, playerCount = selectedPlayerCount) {
     window.clearTimeout(timerId);
+    window.clearInterval(countdownIntervalId);
     state = {
       deckSize: size,
       mode,
@@ -423,19 +460,21 @@
       pairs: Array(playerCount).fill(0),
       wantedRanks: mode === 'wanted' ? pickWantedRanks(size) : [],
       drinkEvent: '',
-      usedPowers: Array.from({ length: playerCount }, () => ({ peek: false, shuffle: false, four: false })),
-      phase: 'playing',
+      usedAbilities: Array(playerCount).fill(null),
+      phase: 'memorize',
+      memorizeUntil: Date.now() + 5000,
       fourCardTurn: false,
       peekActive: false,
       resolution: null,
       winners: [],
-      message: `PLAYER 1 の番です。カードを2枚めくろう。`,
+      message: mode === 'drink' ? '数字だけ5秒間表示中。数字を覚えよう！' : '5秒間の記憶タイム！カードの配置を覚えよう。',
     };
     syncPlayerOptions(playerCount);
     menuScreen.hidden = true;
     gameScreen.hidden = false;
     rebuildBoard();
     updateUI();
+    schedulePhase();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -466,15 +505,31 @@
       if (!Array.isArray(state.wantedRanks) || state.wantedRanks.length !== targetCount) state.wantedRanks = pickWantedRanks(state.deckSize);
     } else state.wantedRanks = [];
     const oldUsedPowers = Array.isArray(state.usedPowers) ? state.usedPowers : [];
-    state.usedPowers = Array.from({ length: state.playerCount }, (_, index) => ({
-      peek: Boolean(oldUsedPowers[index]?.peek),
-      shuffle: Boolean(oldUsedPowers[index]?.shuffle),
-      four: Boolean(oldUsedPowers[index]?.four),
-    }));
+    const previousAbility = state.usedAbility;
+    if (!Array.isArray(state.usedAbilities)) {
+      const oldGlobal = state.usedAbilities || {};
+      const usedByPlayer = Array(state.playerCount).fill(null);
+      if (previousAbility?.power) {
+        const user = Number.isInteger(previousAbility.player) ? previousAbility.player : state.activePlayer;
+        usedByPlayer[user] = previousAbility.power;
+      } else if (oldUsedPowers.length) {
+        oldUsedPowers.forEach((powers, player) => {
+          usedByPlayer[player] = ['peek', 'shuffle', 'four'].find((power) => powers?.[power]) || null;
+        });
+      } else {
+        const used = ['peek', 'shuffle', 'four'].find((power) => oldGlobal[power]);
+        if (used) usedByPlayer[state.activePlayer] = used;
+      }
+      state.usedAbilities = usedByPlayer;
+    }
+    state.usedAbilities = Array.from({ length: state.playerCount }, (_, index) => state.usedAbilities[index] || null);
+    delete state.usedAbility;
+    delete state.usedPowers;
     state.phase ||= 'playing';
     state.fourCardTurn ||= false;
     state.peekActive ||= false;
     state.cards.forEach((card) => { card.matched ||= false; card.revealed ||= false; });
+    if (state.phase === 'memorize' && !state.memorizeUntil) state.memorizeUntil = Date.now() + 5000;
     syncPlayerOptions(state.playerCount);
     menuScreen.hidden = true;
     gameScreen.hidden = false;
@@ -492,6 +547,8 @@
   document.querySelector('#restart').addEventListener('click', () => startGame(state.deckSize, state.mode, state.playerCount));
   document.querySelector('#menuButton').addEventListener('click', () => {
     window.clearTimeout(timerId);
+    window.clearInterval(countdownIntervalId);
+    countdownIntervalId = null;
     menuScreen.hidden = false;
     gameScreen.hidden = true;
     syncPlayerOptions(state.playerCount);
